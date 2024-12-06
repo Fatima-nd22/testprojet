@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Utilisateurs</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+        button {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Gestion des Utilisateurs</h1>
+
+    <!-- Formulaire d'inscription -->
+    <h2>Inscription</h2>
+    <form id="form-register">
+        <input type="text" id="prenom" placeholder="Prénom" required>
+        <input type="text" id="nom" placeholder="Nom" required>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="password" id="password" placeholder="Mot de passe" required>
+        <button type="submit">S'inscrire</button>
+    </form>
+
+    <br>
+
+    <!-- Formulaire de connexion -->
+    <h2>Connexion</h2>
+    <form id="form-login">
+        <input type="email" id="login-email" placeholder="Email" required>
+        <input type="password" id="login-password" placeholder="Mot de passe" required>
+        <button type="submit">Se connecter</button>
+    </form>
+
+    <br>
+
+    <!-- Liste des utilisateurs -->
+    <h2>Liste des Utilisateurs</h2>
+    <table id="users-table">
+        <thead>
+            <tr>
+                <th>Prénom</th>
+                <th>Nom</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Liste des utilisateurs sera insérée ici -->
+        </tbody>
+    </table>
+
+    <script>
+        // Fonction pour afficher la liste des utilisateurs
+        async function afficherUtilisateurs() {
+            try {
+                const response = await fetch('/api/users');
+                const utilisateurs = await response.json();
+                const tbody = document.getElementById('users-table').getElementsByTagName('tbody')[0];
+                tbody.innerHTML = ''; // Vider la table avant de la remplir
+
+                utilisateurs.forEach(utilisateur => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>${utilisateur.prenom}</td>
+                        <td>${utilisateur.nom}</td>
+                        <td>${utilisateur.username}</td>
+                        <td>${utilisateur.email}</td>
+                        <td>
+                            <button onclick="supprimerUtilisateur('${utilisateur.email}')">Supprimer</button>
+                        </td>
+                    `;
+                });
+            } catch (error) {
+                console.error('Erreur lors de l\'affichage des utilisateurs:', error);
+            }
+        }
+
+        // Fonction pour supprimer un utilisateur
+        async function supprimerUtilisateur(email) {
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email })
+                });
+                const result = await response.json();
+                alert(result.message);
+                afficherUtilisateurs(); // Rafraîchir la liste après suppression
+            } catch (error) {
+                console.error('Erreur lors de la suppression de l\'utilisateur:', error);
+            }
+        }
+
+        // Soumettre le formulaire d'inscription
+        document.getElementById('form-register').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const prenom = document.getElementById('prenom').value;
+            const nom = document.getElementById('nom').value;
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prenom, nom, username, email, password })
+            });
+
+            const result = await response.text();
+            alert(result);
+            afficherUtilisateurs(); // Rafraîchir la liste des utilisateurs
+        });
+
+        // Soumettre le formulaire de connexion
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const result = await response.json();
+            alert(result.message);
+        });
+
+        // Charger la liste des utilisateurs au démarrage
+        afficherUtilisateurs();
+    </script>
+</body>
+</html>
